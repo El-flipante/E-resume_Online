@@ -56,7 +56,7 @@ class Application():
             self.logout_user()
             self.__current_username= self.__model.getUserName(session_id)
             return session_id, username
-        return None
+        return None, None
 
 
     def logout_user(self):
