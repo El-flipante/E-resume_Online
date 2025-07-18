@@ -1,7 +1,10 @@
 from app.controllers.application import Application
 from bottle import Bottle, route, run, request, static_file
 from bottle import redirect, template, response
-
+from bottle import Bottle, route, run, request, static_file
+from bottle import redirect, template, response, TEMPLATE_PATH  # Adicione TEMPLATE_PATH aqui
+import os
+TEMPLATE_PATH.insert(0, os.path.abspath('./app/views/html'))
 
 app = Bottle()
 ctl = Application()
@@ -33,16 +36,21 @@ def action_curriculo(parameter=None):
 def login():
     return ctl.render('portal')
 
+@app.route('/adm')
+def admin():
+    return template('adm')
 
 @app.route('/portal', method='POST')
 def action_portal():
     username = request.forms.get('username')
     password = request.forms.get('password')
-    session_id, username= ctl.authenticate_user(username, password)
+    session_id, username, user_type = ctl.authenticate_user(username, password)
     if session_id:
-        response.set_cookie('session_id', session_id, httponly=True, \
-        secure=True, max_age=3600)
-        redirect(f'/pagina/{username}')
+        response.set_cookie('session_id', session_id, httponly=True, secure=True, max_age=3600)
+        if user_type == "admin":
+            return redirect('/adm')
+        else:
+            return redirect(f'/pagina/{username}')
     else:
         return redirect('/portal')
     
@@ -51,7 +59,6 @@ def logout():
     ctl.logout_user()
     response.delete_cookie('session_id')
     redirect('/helper')
-
 #-----------------------------------------------------------------------------
 
 

@@ -51,14 +51,13 @@ class Application():
 
 
     def authenticate_user(self, username, password):
-        session_id = self.__model.checkUser(username, password)
+        session_id, user_type = self.__model.checkUser(username, password)
         if session_id:
             self.logout_user()
-            self.__current_username= self.__model.getUserName(session_id)
-            return session_id, username
-        return None, None
-
-
+            self.__current_username = self.__model.getUserName(session_id)
+            return session_id, username, user_type
+        return None, None, None
+    
     def logout_user(self):
         self.__current_username= None
         session_id = self.get_session_id()

@@ -5,29 +5,27 @@ import uuid
 class DataRecord():
 
     def __init__(self):
-
-        self.__user_accounts= []
+        self.__user_accounts = []
+        self.__admin_accounts = []
         self.__authenticated_users = {}
         self.read()
 
-
     def read(self):
+        # Usuários comuns
         try:
             with open("app/controllers/db/database.json", "r") as arquivo_json:
                 user_data = json.load(arquivo_json)
                 self.__user_accounts = [UserAccount(**data) for data in user_data]
         except FileNotFoundError:
-            self.__user_accounts.append(UserAccount('Guest', '010101','101010'))
+            self.__user_accounts.append(UserAccount('Guest', '010101'))
 
-
-    def book(self,username,password):
-
-        new_user= UserAccount(username,password)
-        self.__user_accounts.append(new_user)
-        with open("app/controllers/db/user_accounts.json", "w") as arquivo_json:
-            user_data = [vars(user_account) for user_account in \
-            self.__user_accounts]
-            json.dump(user_data, arquivo_json)
+        # Usuários admin
+        try:
+            with open("app/controllers/db/adm_database.json", "r") as arquivo_json:
+                admin_data = json.load(arquivo_json)
+                self.__admin_accounts = [UserAccount(**data) for data in admin_data]
+        except FileNotFoundError:
+            pass
 
 
     def getCurrentUser(self,session_id):
@@ -52,13 +50,19 @@ class DataRecord():
 
 
     def checkUser(self, username, password):
+        # Verifica usuários comuns
         for user in self.__user_accounts:
             if user.username == username and user.password == password:
-                session_id = str(uuid.uuid4())  # Gera um ID de sessão único
+                session_id = str(uuid.uuid4())
                 self.__authenticated_users[session_id] = user
-                return session_id  # Retorna o ID de sessão para o usuário
-        return None
-
+                return session_id, "user"
+        # Verifica admins
+        for admin in self.__admin_accounts:
+            if admin.username == username and admin.password == password:
+                session_id = str(uuid.uuid4())
+                self.__authenticated_users[session_id] = admin
+                return session_id, "admin"
+        return None, None
 
     def logout(self, session_id):
         if session_id in self.__authenticated_users:
