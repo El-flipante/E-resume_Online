@@ -145,6 +145,32 @@
     linha.remove();
   }
 </script>
+<script>
+  const ws = new WebSocket('ws://' + window.location.host + '/websocket');
+
+  ws.onopen = function () {
+    console.log('WebSocket conectado!');
+    // Você pode mandar uma mensagem inicial se quiser:
+    ws.send('Administrador entrou no painel.');
+  };
+
+  ws.onmessage = function (event) {
+    const msg = event.data;
+    console.log('Mensagem recebida:', msg);
+
+    // Exibir no topo da página (exemplo):
+    const header = document.querySelector('header');
+    const info = document.createElement('div');
+    info.style.backgroundColor = '#d1f0d1';
+    info.style.padding = '10px';
+    info.textContent = msg;
+    header.appendChild(info);
+  };
+
+  ws.onclose = function () {
+    console.log('WebSocket desconectado.');
+  };
+</script>
 
 </body>
 </html>

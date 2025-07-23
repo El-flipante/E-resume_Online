@@ -2,12 +2,16 @@ from app.controllers.application import Application
 from bottle import Bottle, route, run, request, static_file
 from bottle import redirect, template, response
 from bottle import Bottle, route, run, request, static_file
-from bottle import redirect, template, response, TEMPLATE_PATH  # Adicione TEMPLATE_PATH aqui
+from bottle import redirect, template, response, TEMPLATE_PATH, abort  # Adicione TEMPLATE_PATH aqui
 import os
 TEMPLATE_PATH.insert(0, os.path.abspath('./app/views/html'))
+from geventwebsocket.handler import WebSocketHandler
 
 app = Bottle()
 ctl = Application()
+# Lista global de conexões
+clients = set()
+
 
 #-----------------------------------------------------------------------------
 # Rotas:
@@ -59,9 +63,36 @@ def logout():
     ctl.logout_user()
     response.delete_cookie('session_id')
     redirect('/helper')
+
+
+@app.route('/websocket')
+def handle_websocket():
+    wsock = request.environ.get('wsgi.websocket')
+    if not wsock:
+        abort(400, 'Expected WebSocket request.')
+
+    # Adiciona à lista de conexões
+    clients.add(wsock)
+    try:
+        while True:
+            message = wsock.receive()
+            if message is None:
+                break
+
+            # Envia para todos os clientes conectados
+            for client in clients:
+                try:
+                    client.send(f"Você disse: {message}")
+                except:
+                    pass
+    finally:
+        clients.remove(wsock)
+
+
+
 #-----------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-
-    run(app, host='0.0.0.0', port=8080, debug=True)
+    run(app=app, host='0.0.0.0', port=8080, 
+        server='gevent', handler_class=WebSocketHandler, debug=True)

@@ -1,7 +1,11 @@
-from bottle import template
+from gevent import monkey
+monkey.patch_all()
+from bottle import template, Bottle
 from bottle import redirect
 from app.controllers.datarecord import DataRecord
 from bottle import request
+from geventwebsocket.handler import WebSocketHandler
+from gevent.pywsgi import WSGIServer
 
 class Application():
 
@@ -14,6 +18,9 @@ class Application():
 
         self.__model= DataRecord()
         self.__current_loginusername= None
+
+        self.app = Bottle()
+        self.active_connections = set()
 
     def render(self,page,parameter=None):
         content = self.pages.get(page, self.helper)
@@ -63,3 +70,4 @@ class Application():
         session_id = self.get_session_id()
         if session_id:
             self.__model.logout(session_id)
+
